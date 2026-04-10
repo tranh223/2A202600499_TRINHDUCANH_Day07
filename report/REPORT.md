@@ -1,8 +1,8 @@
 # Báo Cáo Lab 7: Embedding & Vector Store
 
-**Họ tên:** [Tên sinh viên]
-**Nhóm:** [Tên nhóm]
-**Ngày:** [Ngày nộp]
+**Họ tên:** [Trịnh Đức Anh]
+**Nhóm:** [C401-A4]
+**Ngày:** [10/4/2026]
 
 ---
 
@@ -11,29 +11,29 @@
 ### Cosine Similarity (Ex 1.1)
 
 **High cosine similarity nghĩa là gì?**
-> *Viết 1-2 câu:*
+> *High cosine similarity cho thấy các vector có hướng gần như trùng khít, chứng tỏ sự tương đồng chặt chẽ về mặt nội dung hoặc ngữ nghĩa giữa các đối tượng. Đây là yếu tố cốt lõi giúp các mô hình AI thực hiện tìm kiếm và phân loại dữ liệu chính xác dựa trên bản chất thay vì chỉ so khớp từ khóa đơn thuần.*
 
 **Ví dụ HIGH similarity:**
-- Sentence A:
-- Sentence B:
-- Tại sao tương đồng:
+- Sentence A: "Làm thế nào để tối ưu hóa hiệu suất truy vấn trong cơ sở dữ liệu vector?"
+- Sentence B: "Các phương pháp giúp cải thiện tốc độ tìm kiếm trên vector database là gì?"
+- Tại sao tương đồng: Dù sử dụng từ ngữ khác nhau (tối ưu hóa vs cải thiện, hiệu suất vs tốc độ), cả hai đều chia sẻ chung một mục tiêu và ngữ cảnh kỹ thuật. Trong các mô hình embedding, chúng sẽ được ánh xạ thành hai vector có hướng gần như trùng khít vì có cùng "tọa độ ngữ nghĩa".
 
 **Ví dụ LOW similarity:**
-- Sentence A:
-- Sentence B:
-- Tại sao khác:
+- Sentence A: "Các kỹ thuật nén mô hình giúp giảm dung lượng file thư viện khi triển khai RAG."
+- Sentence B:  "Thời tiết tại Hà Nội hôm nay có mưa rào và dông rải rác vào chiều tối."
+- Tại sao khác: Hai câu này thuộc hai miền nội dung hoàn toàn khác biệt (kỹ thuật phần mềm và khí tượng). Các từ khóa và ngữ cảnh không có điểm chung, khiến các vector embedding của chúng hướng về các phía khác nhau trong không gian đa chiều, dẫn đến góc giữa hai vector lớn (gần 90°) và chỉ số Cosine Similarity tiến về mức 0
 
 **Tại sao cosine similarity được ưu tiên hơn Euclidean distance cho text embeddings?**
-> *Viết 1-2 câu:*
+> *Cosine similarity được ưu tiên vì nó tập trung vào hướng (ngữ nghĩa) của vector thay vì độ dài, giúp nhận diện sự tương đồng giữa các văn bản cùng chủ đề bất kể chúng là một câu ngắn hay một đoạn văn dài. Ngược lại, Euclidean distance dễ bị nhiễu bởi quy mô dữ liệu, khiến hai tài liệu có cùng nội dung nhưng chênh lệch số lượng từ bị coi là xa cách về mặt toán học.*
 
 ### Chunking Math (Ex 1.2)
 
 **Document 10,000 ký tự, chunk_size=500, overlap=50. Bao nhiêu chunks?**
-> *Trình bày phép tính:*
-> *Đáp án:*
+> *Document(L) 10,000 ký tự, chunk_size(C)=500, overlap(O)=50. Bước nhảy S = C- O = 50. Số lượng chunk = N = (L-O)/ (C-O) sấp sỉ 22,11 chunk*
+> *23 chunks. (Trong đó 22 chunk đầu tiên có kích thước đầy đủ 500 ký tự và chunk cuối cùng chứa phần dư còn lại).*
 
 **Nếu overlap tăng lên 100, chunk count thay đổi thế nào? Tại sao muốn overlap nhiều hơn?**
-> *Viết 1-2 câu:*
+> *Số lượng chunk sẽ tăng lên (từ 23 lên 25 chunks) vì bước nhảy giữa các đoạn ngắn lại, khiến văn bản bị chia nhỏ thành nhiều phần hơn để duy trì phần lặp lại lớn hơn. Việc tăng overlap giúp hạn chế tối đa việc mất ngữ cảnh tại các điểm cắt, đảm bảo các thực thể hoặc ý niệm phức tạp không bị chia tách vụng về giữa hai chunk khác nhau*
 
 ---
 
