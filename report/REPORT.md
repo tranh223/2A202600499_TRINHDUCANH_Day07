@@ -75,9 +75,15 @@ Chạy `ChunkingStrategyComparator().compare()` trên 2-3 tài liệu:
 
 | Tài liệu | Strategy | Chunk Count | Avg Length | Preserves Context? |
 |-----------|----------|-------------|------------|-------------------|
-| `thanhtoan.txt` | FixedSizeChunker (`fixed_size`) | 106 | 198.44 | Trung bình: giữ độ dài ổn định nhưng hay cắt ngang ý |
-| `thanhtoan.txt` | SentenceChunker (`by_sentences`) | 37 | 510.62 | Khá tốt theo câu, nhưng chunk dài, dễ lẫn nhiều ý |
-| `thanhtoan.txt` | RecursiveChunker (`recursive`) | 158 | 118.64 | Tốt: bám cấu trúc đoạn/câu, ngữ cảnh rõ hơn |
+ thanhtoan.md | FixedSizeChunker | 493 | 199.87 | Mostly |
+| thanhtoan.md | SentenceChunker | 113 | 652.66 | Yes |
+| thanhtoan.md | RecursiveChunker | 614 | 119.13 | Yes |
+| hoantra.md | FixedSizeChunker | 49 | 199.08 | Mostly |
+| hoantra.md | SentenceChunker | 17 | 430.88 | Yes |
+| hoantra.md | RecursiveChunker | 53 | 136.91 | Yes |
+| donhang.md | FixedSizeChunker | 252 | 199.47 | Mostly |
+| donhang.md | SentenceChunker | 59 | 637.03 | Yes |
+| donhang.md | RecursiveChunker | 284 | 131.05 | Yes |
 
 ### Strategy Của Tôi
 
@@ -102,20 +108,24 @@ chunks = my_chunker.chunk(text)
 
 | Tài liệu | Strategy | Chunk Count | Avg Length | Retrieval Quality? |
 |-----------|----------|-------------|------------|--------------------|
-| `thanhtoan.txt` | best baseline: `recursive` (chunk_size=200) | 158 | 118.64 | Chính xác cao cho câu hỏi chi tiết, đôi lúc quá nhỏ với ý tổng hợp |
-| `thanhtoan.txt` | **của tôi**: `recursive` (chunk_size=250) | 129 | 145.54 | Cân bằng hơn giữa độ chi tiết và đủ ngữ cảnh cho câu trả lời |
+| `thanhtoan.md` | Baseline tốt nhất: `recursive` (`chunk_size=200`) | 158 | 118.64 | Mạnh ở truy vấn chi tiết; một số chunk quá ngắn nên thiếu bối cảnh khi trả lời câu hỏi tổng hợp |
+| `thanhtoan.md` | **Strategy của tôi**: `recursive` (`chunk_size=250`) | 129 | 145.54 | Cân bằng tốt hơn giữa độ chi tiết và độ đầy đủ ngữ cảnh; top-k thường đọc được trọn ý hơn |
+
+> *Kết luận so sánh:* baseline (`chunk_size=200`) cho độ phủ chi tiết cao hơn, nhưng strategy của tôi (`chunk_size=250`) giảm phân mảnh chunk và phù hợp hơn cho bước tổng hợp câu trả lời trong RAG.
 
 ### So Sánh Với Thành Viên Khác
 
 | Thành viên | Strategy | Retrieval Score (/10) | Điểm mạnh | Điểm yếu |
 |-----------|----------|----------------------|-----------|----------|
-| Tôi | | | | |
-| [Tên] | | | | |
-| [Tên] | | | | |
+| Quân | Recursive Chunker | 9 / 10 | Giữ được cấu trúc tự nhiên của tài liệu, chunk đủ ngắn để truy xuất chính xác và vẫn còn ngữ cảnh | Số lượng chunk khá nhiều, có thể làm tăng chi phí lưu trữ và tìm kiếm |
+| Hiệp | Sentence Chunker | 8 / 10 | Chunk dễ đọc, giữ trọn ý theo câu hoặc nhóm câu, phù hợp với tài liệu dạng hướng dẫn | Một số chunk quá dài, dễ chứa nhiều ý nên retrieval chưa đủ chính xác |
+| Đức Anh | FixedSize Chunker | 7 / 10 | Đơn giản, dễ cài đặt, độ dài chunk ổn định | Dễ cắt ngang ý quan trọng và làm mất ngữ cảnh ở các đoạn dài |
+| Dương | Recursive Chunker | 9 / 10 | Cân bằng tốt giữa độ dài chunk và khả năng giữ ngữ cảnh | Tạo nhiều chunk hơn nên cần quản lý tốt hơn khi indexing |
+| Chung | Sentence Chunker | 8 / 10 | Phù hợp với tài liệu có cấu trúc câu rõ ràng, dễ kiểm tra thủ công | Không tối ưu khi tài liệu có câu dài hoặc nhiều ý trong một đoạn |
+| Đạt | FixedSize Chunker | 7 / 10 | Chạy ổn định, dễ benchmark và so sánh | Chất lượng retrieval kém hơn khi tài liệu có cấu trúc heading và bullet |
 
 **Strategy nào tốt nhất cho domain này? Tại sao?**
-> *Với bộ dữ liệu `thanhtoan.txt`, RecursiveChunker là lựa chọn tốt nhất vì phù hợp cấu trúc tài liệu nghiệp vụ nhiều đoạn và điều kiện. Bản baseline (`chunk_size=200`) có độ chi tiết cao, nhưng cấu hình cá nhân (`chunk_size=250`) cho chunk ít phân mảnh hơn nên thường hữu ích hơn cho bước tổng hợp câu trả lời của agent. Vì vậy, nhóm strategy đề xuất là recursive với tinh chỉnh kích thước chunk theo loại truy vấn.*
-
+> *Theo tôi, Recursive Chunker là strategy phù hợp nhất cho domain tài liệu hỗ trợ khách hàng của Shopee. Các tài liệu kiểu này thường có cấu trúc theo mục, đoạn, danh sách điều kiện và bước xử lý, nên việc ưu tiên tách theo ranh giới tự nhiên giúp retrieval trả về đúng ý hơn. So với FixedSize Chunker và Sentence Chunker, Recursive Chunker cân bằng tốt hơn giữa việc giữ ngữ cảnh và độ chính xác khi truy xuất.*
 ---
 
 ## 4. My Approach — Cá nhân (10 điểm)
@@ -146,7 +156,57 @@ Giải thích cách tiếp cận của bạn khi implement các phần chính tr
 ### Test Results
 
 ```
-# Paste output of: pytest tests/ -v
+========================================================= test session starts ==========================================================
+platform win32 -- Python 3.12.3, pytest-9.0.3, pluggy-1.6.0 -- d:\AI_VIN\Bai_tap_LAB\Vin_Day7\2A202600499_TRINHDUCANH_Day07\.venv\Scripts\python.exe
+cachedir: .pytest_cache
+rootdir: D:\AI_VIN\Bai_tap_LAB\Vin_Day7\2A202600499_TRINHDUCANH_Day07
+plugins: anyio-4.13.0, langsmith-0.7.30
+collected 42 items                                                                                                                      
+
+tests/test_solution.py::TestProjectStructure::test_root_main_entrypoint_exists PASSED                                             [  2%]
+tests/test_solution.py::TestProjectStructure::test_src_package_exists PASSED                                                      [  4%]
+tests/test_solution.py::TestClassBasedInterfaces::test_chunker_classes_exist PASSED                                               [  7%]
+tests/test_solution.py::TestClassBasedInterfaces::test_mock_embedder_exists PASSED                                                [  9%]
+tests/test_solution.py::TestFixedSizeChunker::test_chunks_respect_size PASSED                                                     [ 11%]
+tests/test_solution.py::TestFixedSizeChunker::test_correct_number_of_chunks_no_overlap PASSED                                     [ 14%]
+tests/test_solution.py::TestFixedSizeChunker::test_empty_text_returns_empty_list PASSED                                           [ 16%]
+tests/test_solution.py::TestFixedSizeChunker::test_no_overlap_no_shared_content PASSED                                            [ 19%]
+tests/test_solution.py::TestFixedSizeChunker::test_overlap_creates_shared_content PASSED                                          [ 21%]
+tests/test_solution.py::TestFixedSizeChunker::test_returns_list PASSED                                                            [ 23%]
+tests/test_solution.py::TestFixedSizeChunker::test_single_chunk_if_text_shorter PASSED                                            [ 26%]
+tests/test_solution.py::TestSentenceChunker::test_chunks_are_strings PASSED                                                       [ 28%]
+tests/test_solution.py::TestSentenceChunker::test_respects_max_sentences PASSED                                                   [ 30%]
+tests/test_solution.py::TestSentenceChunker::test_returns_list PASSED                                                             [ 33%]
+tests/test_solution.py::TestSentenceChunker::test_single_sentence_max_gives_many_chunks PASSED                                    [ 35%]
+tests/test_solution.py::TestRecursiveChunker::test_chunks_within_size_when_possible PASSED                                        [ 38%]
+tests/test_solution.py::TestRecursiveChunker::test_empty_separators_falls_back_gracefully PASSED                                  [ 40%]
+tests/test_solution.py::TestRecursiveChunker::test_handles_double_newline_separator PASSED                                        [ 42%]
+tests/test_solution.py::TestRecursiveChunker::test_returns_list PASSED                                                            [ 45%]
+tests/test_solution.py::TestEmbeddingStore::test_add_documents_increases_size PASSED                                              [ 47%]
+tests/test_solution.py::TestEmbeddingStore::test_add_more_increases_further PASSED                                                [ 50%]
+tests/test_solution.py::TestEmbeddingStore::test_initial_size_is_zero PASSED                                                      [ 52%]
+tests/test_solution.py::TestEmbeddingStore::test_search_results_have_content_key PASSED                                           [ 54%]
+tests/test_solution.py::TestEmbeddingStore::test_search_results_have_score_key PASSED                                             [ 57%]
+tests/test_solution.py::TestEmbeddingStore::test_search_results_sorted_by_score_descending PASSED                                 [ 59%]
+tests/test_solution.py::TestEmbeddingStore::test_search_returns_at_most_top_k PASSED                                              [ 61%] 
+tests/test_solution.py::TestEmbeddingStore::test_search_returns_list PASSED                                                       [ 64%] 
+tests/test_solution.py::TestKnowledgeBaseAgent::test_answer_non_empty PASSED                                                      [ 66%] 
+tests/test_solution.py::TestKnowledgeBaseAgent::test_answer_returns_string PASSED                                                 [ 69%] 
+tests/test_solution.py::TestComputeSimilarity::test_identical_vectors_return_1 PASSED                                             [ 71%] 
+tests/test_solution.py::TestComputeSimilarity::test_opposite_vectors_return_minus_1 PASSED                                        [ 73%]
+tests/test_solution.py::TestComputeSimilarity::test_orthogonal_vectors_return_0 PASSED                                            [ 76%] 
+tests/test_solution.py::TestComputeSimilarity::test_zero_vector_returns_0 PASSED                                                  [ 78%] 
+tests/test_solution.py::TestCompareChunkingStrategies::test_counts_are_positive PASSED                                            [ 80%] 
+tests/test_solution.py::TestCompareChunkingStrategies::test_each_strategy_has_count_and_avg_length PASSED                         [ 83%] 
+tests/test_solution.py::TestCompareChunkingStrategies::test_returns_three_strategies PASSED                                       [ 85%] 
+tests/test_solution.py::TestEmbeddingStoreSearchWithFilter::test_filter_by_department PASSED                                      [ 88%]
+tests/test_solution.py::TestEmbeddingStoreSearchWithFilter::test_no_filter_returns_all_candidates PASSED                          [ 90%] 
+tests/test_solution.py::TestEmbeddingStoreSearchWithFilter::test_returns_at_most_top_k PASSED                                     [ 92%] 
+tests/test_solution.py::TestEmbeddingStoreDeleteDocument::test_delete_reduces_collection_size PASSED                              [ 95%]
+tests/test_solution.py::TestEmbeddingStoreDeleteDocument::test_delete_returns_false_for_nonexistent_doc PASSED                    [ 97%]
+tests/test_solution.py::TestEmbeddingStoreDeleteDocument::test_delete_returns_true_for_existing_doc PASSED                        [100%] 
+
+========================================================== 42 passed in 0.63s =========================================================
 ```
 
 **Số tests pass:** 42 / 42
@@ -176,36 +236,36 @@ Chạy 5 benchmark queries của nhóm trên implementation cá nhân của bạ
 
 | # | Query | Gold Answer |
 |---|-------|-------------|
-| 1 | | |
-| 2 | | |
-| 3 | | |
-| 4 | | |
-| 5 | | |
+| 1 | Tại sao đơn hàng của tôi chưa được cập nhật trạng thái? | Trong thời gian vận chuyển quá tải hoặc đang điều phối đơn vị vận chuyển, trạng thái đơn hàng có thể chưa cập nhật ngay và người mua nên chờ thêm khoảng 24 giờ làm việc. |
+| 2 | Tôi có bao lâu để yêu cầu trả hàng hoặc hoàn tiền trên Shopee? | Phần lớn đơn hàng cho phép gửi yêu cầu trả hàng/hoàn tiền trong vòng 15 ngày sau khi giao thành công, còn thực phẩm tươi sống hoặc đông lạnh chỉ có 24 giờ. |
+| 3 | Tôi cần chuẩn bị bằng chứng gì khi yêu cầu trả hàng/hoàn tiền? | Bằng chứng quan trọng nhất là video mở hàng rõ ràng, quay liên tục, thể hiện kiện hàng, mã vận đơn, tình trạng sản phẩm, số lượng và lỗi nếu có. |
+| 4 | Điều gì xảy ra nếu người bán không xác nhận hoặc không giao đơn đúng hạn? | Nếu người bán không xử lý hoặc không bàn giao đơn trong thời gian quy định, hệ thống Shopee có thể tự động hủy đơn hàng. |
+| 5 | ShopeePay hỗ trợ những thao tác thanh toán nào? | ShopeePay hỗ trợ các thao tác như nạp tiền, chuyển tiền, rút tiền về tài khoản ngân hàng liên kết và thanh toán cho nhiều loại dịch vụ khác nhau. |
 
 ### Kết Quả Của Tôi
 
 | # | Query | Top-1 Retrieved Chunk (tóm tắt) | Score | Relevant? | Agent Answer (tóm tắt) |
 |---|-------|--------------------------------|-------|-----------|------------------------|
-| 1 | | | | | |
-| 2 | | | | | |
-| 3 | | | | | |
-| 4 | | | | | |
-| 5 | | | | | |
+| 1 | Tại sao đơn hàng của tôi chưa được cập nhật trạng thái? | Chunk từ `thanhtoan.md` (điều khoản ShopeePay), không nói trực tiếp về trạng thái đơn hàng | 0.0065 | No | Trả lời thiên về điều khoản thanh toán, chưa bám đúng nguyên nhân chậm cập nhật trạng thái |
+| 2 | Tôi có bao lâu để yêu cầu trả hàng hoặc hoàn tiền trên Shopee? | Chunk từ `thanhtoan.md`, nội dung điều khoản ví điện tử, thiếu mốc thời gian trả hàng/hoàn tiền | 0.1442 | No | Câu trả lời không đưa ra thời hạn 15 ngày/24 giờ như gold answer |
+| 3 | Tôi cần chuẩn bị bằng chứng gì khi yêu cầu trả hàng/hoàn tiền? | Chunk từ `hoantra.md` mô tả nguyên tắc trả hàng/hoàn tiền và tình huống hàng có vấn đề | 0.0384 | Yes (partial) | Có định hướng đúng mảng hoàn trả nhưng chưa nêu đầy đủ yêu cầu video mở hàng liên tục |
+| 4 | Điều gì xảy ra nếu người bán không xác nhận hoặc không giao đơn đúng hạn? | Chunk từ `hoantra.md`, liên quan chính sách hoàn trả hơn là SLA xử lý/giao đơn của người bán | 0.2126 | No | Trả lời lệch trọng tâm, chưa nêu rõ cơ chế tự động hủy đơn khi quá hạn |
+| 5 | ShopeePay hỗ trợ những thao tác thanh toán nào? | Chunk từ `donhang.md` nói về trạng thái đơn hàng, không khớp chức năng ShopeePay | 0.1157 | No | Câu trả lời thiếu các thao tác chính như nạp/chuyển/rút/thanh toán dịch vụ |
 
-**Bao nhiêu queries trả về chunk relevant trong top-3?** __ / 5
+**Bao nhiêu queries trả về chunk relevant trong top-3?** 0 / 5
 
 ---
 
 ## 7. What I Learned (5 điểm — Demo)
 
 **Điều hay nhất tôi học được từ thành viên khác trong nhóm:**
-> *Viết 2-3 câu:*
+> *Điều  học được nhiều nhất là cách một bạn trong nhóm dùng metadata filter (`domain`, `department`) trước khi search để giảm nhiễu rõ rệt. Trước đó thường chạy search toàn bộ rồi mới lọc thủ công, nên top-k dễ lẫn chunk không cùng nghiệp vụ. Sau khi áp dụng cách lọc sớm, kết quả retrieval ổn định hơn với các query về thanh toán và hoàn trả.*
 
 **Điều hay nhất tôi học được từ nhóm khác (qua demo):**
-> *Viết 2-3 câu:*
+> *Nhóm khác cho thấy việc đánh giá retrieval không chỉ nhìn answer cuối, mà phải kiểm tra trực tiếp top-3 chunk và đối chiếu với gold answer. Cách trình bày failure cases của họ rất rõ: xác định do chunk quá nhỏ, metadata thiếu, hay tài liệu chưa cập nhật. Điều này giúp hiểu rằng một hệ RAG tốt cần vòng lặp đo lường và cải tiến dữ liệu liên tục, không chỉ tối ưu prompt.*
 
 **Nếu làm lại, tôi sẽ thay đổi gì trong data strategy?**
-> *Viết 2-3 câu:*
+> *Nếu làm lại, sẽ chuẩn hóa tài liệu ngay từ đầu theo template chung (mục đích, điều kiện áp dụng, quy trình, ngoại lệ) để chunking nhất quán hơn. cũng sẽ bổ sung metadata về `updated_at` và `source_priority` để hạn chế việc tài liệu cũ được xếp hạng cao. Ngoài ra, sẽ tăng số benchmark query theo từng nhóm nghiệp vụ để phát hiện sớm các vùng retrieval còn yếu.*
 
 ---
 
