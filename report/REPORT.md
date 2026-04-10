@@ -121,7 +121,7 @@ chunks = my_chunker.chunk(text)
 | Hiệp | Sentence Chunker | 8 / 10 | Chunk dễ đọc, giữ trọn ý theo câu hoặc nhóm câu, phù hợp với tài liệu dạng hướng dẫn | Một số chunk quá dài, dễ chứa nhiều ý nên retrieval chưa đủ chính xác |
 | Đức Anh | FixedSize Chunker | 7 / 10 | Đơn giản, dễ cài đặt, độ dài chunk ổn định | Dễ cắt ngang ý quan trọng và làm mất ngữ cảnh ở các đoạn dài |
 | Dương | Recursive Chunker | 9 / 10 | Cân bằng tốt giữa độ dài chunk và khả năng giữ ngữ cảnh | Tạo nhiều chunk hơn nên cần quản lý tốt hơn khi indexing |
-| Chung | Sentence Chunker | 8 / 10 | Phù hợp với tài liệu có cấu trúc câu rõ ràng, dễ kiểm tra thủ công | Không tối ưu khi tài liệu có câu dài hoặc nhiều ý trong một đoạn |
+| Chung | RecursiveChunker | 8/10 | Giữ ngữ cảnh tốt, hợp tài liệu kỹ thuật | Có thể tạo nhiều chunk hơn mức cần thiết |
 | Đạt | FixedSize Chunker | 7 / 10 | Chạy ổn định, dễ benchmark và so sánh | Chất lượng retrieval kém hơn khi tài liệu có cấu trúc heading và bullet |
 
 **Strategy nào tốt nhất cho domain này? Tại sao?**
