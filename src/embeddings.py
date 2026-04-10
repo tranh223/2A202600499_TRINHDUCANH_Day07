@@ -3,8 +3,8 @@ from __future__ import annotations
 import hashlib
 import math
 
-LOCAL_EMBEDDING_MODEL = "all-MiniLM-L6-v2"
-OPENAI_EMBEDDING_MODEL = "text-embedding-3-small"
+LOCAL_EMBEDDING_MODEL = "embeddinggemma"
+OPENAI_EMBEDDING_MODEL = "multilingual-e5-large"
 EMBEDDING_PROVIDER_ENV = "EMBEDDING_PROVIDER"
 
 
@@ -30,11 +30,11 @@ class LocalEmbedder:
     """Sentence Transformers-backed local embedder."""
 
     def __init__(self, model_name: str = LOCAL_EMBEDDING_MODEL) -> None:
-        from sentence_transformers import SentenceTransformer
+        from langchain_ollama import OllamaEmbeddings
 
         self.model_name = model_name
         self._backend_name = model_name
-        self.model = SentenceTransformer(model_name)
+        self.model = OllamaEmbeddings(model_name)
 
     def __call__(self, text: str) -> list[float]:
         embedding = self.model.encode(text, normalize_embeddings=True)
