@@ -41,27 +41,29 @@
 
 ### Domain & Lý Do Chọn
 
-**Domain:** [ví dụ: Customer support FAQ, Vietnamese law, cooking recipes, ...]
+**Domain:** Customer support / vận hành thương mại điện tử (quy trình đơn hàng, thanh toán, hoàn trả)
 
 **Tại sao nhóm chọn domain này?**
-> *Viết 2-3 câu:*
+> *Nhóm chọn domain này vì dữ liệu gần với bài toán trợ lý nội bộ và hỗ trợ khách hàng trong thực tế: câu hỏi thường xoay quanh thanh toán, trạng thái đơn hàng, đổi trả và xử lý khiếu nại. Đây cũng là domain có nhiều tình huống tương tự nhau nhưng khác ngữ cảnh, rất phù hợp để kiểm tra chất lượng retrieval theo chunking strategy và metadata filter. Ngoài ra, nhóm có thể dễ xây benchmark query mang tính nghiệp vụ rõ ràng để so sánh giữa các thành viên.*
 
 ### Data Inventory
 
 | # | Tên tài liệu | Nguồn | Số ký tự | Metadata đã gán |
 |---|--------------|-------|----------|-----------------|
-| 1 | | | | |
-| 2 | | | | |
-| 3 | | | | |
-| 4 | | | | |
-| 5 | | | | |
+| 1 | `thanhtoan.md` | Tài liệu nghiệp vụ nhóm tự tổng hợp (quy trình thanh toán) | 18,935 | `domain=payment`, `doc_type=policy`, `lang=vi`, `department=cs` |
+| 2 | `hoantra.md` | Tài liệu nghiệp vụ nhóm tự tổng hợp (chính sách hoàn trả) | 1,709 | `domain=return_refund`, `doc_type=policy`, `lang=vi`, `department=cs` |
+| 3 | `donhang.md` | Tài liệu nghiệp vụ nhóm tự tổng hợp (quản lý đơn hàng) | 912 | `domain=order`, `doc_type=faq`, `lang=vi`, `department=ops` |
+| 4 | - | - | - | - |
+| 5 | - | - | - | - |
 
 ### Metadata Schema
 
 | Trường metadata | Kiểu | Ví dụ giá trị | Tại sao hữu ích cho retrieval? |
 |----------------|------|---------------|-------------------------------|
-| | | | |
-| | | | |
+| `domain` | string | `payment`, `order`, `return_refund` | Thu hẹp truy xuất theo chủ đề nghiệp vụ, giảm nhiễu giữa các mảng nội dung khác nhau |
+| `doc_type` | string | `policy`, `faq` | Tách tài liệu quy định và tài liệu hỏi-đáp để ưu tiên loại nội dung phù hợp mục đích câu hỏi |
+| `lang` | string | `vi` | Hữu ích khi hệ thống có dữ liệu đa ngôn ngữ, tránh trả nhầm ngôn ngữ |
+| `department` | string | `cs`, `ops` | Cho phép lọc theo phòng ban phụ trách để tăng độ chính xác và khả năng điều phối xử lý |
 
 ---
 
@@ -73,31 +75,35 @@ Chạy `ChunkingStrategyComparator().compare()` trên 2-3 tài liệu:
 
 | Tài liệu | Strategy | Chunk Count | Avg Length | Preserves Context? |
 |-----------|----------|-------------|------------|-------------------|
-| | FixedSizeChunker (`fixed_size`) | | | |
-| | SentenceChunker (`by_sentences`) | | | |
-| | RecursiveChunker (`recursive`) | | | |
+| `thanhtoan.txt` | FixedSizeChunker (`fixed_size`) | 106 | 198.44 | Trung bình: giữ độ dài ổn định nhưng hay cắt ngang ý |
+| `thanhtoan.txt` | SentenceChunker (`by_sentences`) | 37 | 510.62 | Khá tốt theo câu, nhưng chunk dài, dễ lẫn nhiều ý |
+| `thanhtoan.txt` | RecursiveChunker (`recursive`) | 158 | 118.64 | Tốt: bám cấu trúc đoạn/câu, ngữ cảnh rõ hơn |
 
 ### Strategy Của Tôi
 
-**Loại:** [FixedSizeChunker / SentenceChunker / RecursiveChunker / custom strategy]
+**Loại:** RecursiveChunker (tinh chỉnh `chunk_size=250`)
 
 **Mô tả cách hoạt động:**
-> *Viết 3-4 câu: strategy chunk thế nào? Dựa trên dấu hiệu gì?*
+> *Chiến lược này tách tài liệu theo thứ tự ưu tiên separator: đoạn (`\n\n`) -> dòng (`\n`) -> câu (`. `) -> từ (` `) -> ký tự. Nếu một đoạn vẫn quá dài, thuật toán tiếp tục tách đệ quy bằng separator cấp thấp hơn cho đến khi đạt ngưỡng. Cách làm này giúp phần lớn chunk giữ được ranh giới tự nhiên của văn bản nghiệp vụ thay vì cắt cứng theo số ký tự. Với dữ liệu hướng quy trình như thanh toán, chunk tạo ra thường vừa đủ ngắn để retrieve tốt nhưng vẫn còn đủ ngữ cảnh để trả lời.*
 
 **Tại sao tôi chọn strategy này cho domain nhóm?**
-> *Viết 2-3 câu: domain có pattern gì mà strategy khai thác?*
+> *Domain chăm sóc khách hàng/thanh toán có cấu trúc dạng mục, điều kiện, ngoại lệ và các bước xử lý liên tiếp. Recursive chunking tận dụng tốt cấu trúc này vì ưu tiên tách theo đoạn và câu trước khi buộc phải tách nhỏ hơn. Nhờ đó, kết quả retrieval thường trả về đúng cụm quy trình thay vì các mảnh câu rời rạc.*
 
 **Code snippet (nếu custom):**
 ```python
-# Paste implementation here
+from src.chunking import RecursiveChunker
+
+text = './data/thanhtoan.txt'
+my_chunker = RecursiveChunker(chunk_size=250)
+chunks = my_chunker.chunk(text)
 ```
 
 ### So Sánh: Strategy của tôi vs Baseline
 
 | Tài liệu | Strategy | Chunk Count | Avg Length | Retrieval Quality? |
 |-----------|----------|-------------|------------|--------------------|
-| | best baseline | | | |
-| | **của tôi** | | | |
+| `thanhtoan.txt` | best baseline: `recursive` (chunk_size=200) | 158 | 118.64 | Chính xác cao cho câu hỏi chi tiết, đôi lúc quá nhỏ với ý tổng hợp |
+| `thanhtoan.txt` | **của tôi**: `recursive` (chunk_size=250) | 129 | 145.54 | Cân bằng hơn giữa độ chi tiết và đủ ngữ cảnh cho câu trả lời |
 
 ### So Sánh Với Thành Viên Khác
 
@@ -108,7 +114,7 @@ Chạy `ChunkingStrategyComparator().compare()` trên 2-3 tài liệu:
 | [Tên] | | | | |
 
 **Strategy nào tốt nhất cho domain này? Tại sao?**
-> *Viết 2-3 câu:*
+> *Với bộ dữ liệu `thanhtoan.txt`, RecursiveChunker là lựa chọn tốt nhất vì phù hợp cấu trúc tài liệu nghiệp vụ nhiều đoạn và điều kiện. Bản baseline (`chunk_size=200`) có độ chi tiết cao, nhưng cấu hình cá nhân (`chunk_size=250`) cho chunk ít phân mảnh hơn nên thường hữu ích hơn cho bước tổng hợp câu trả lời của agent. Vì vậy, nhóm strategy đề xuất là recursive với tinh chỉnh kích thước chunk theo loại truy vấn.*
 
 ---
 
@@ -119,23 +125,23 @@ Giải thích cách tiếp cận của bạn khi implement các phần chính tr
 ### Chunking Functions
 
 **`SentenceChunker.chunk`** — approach:
-> *Viết 2-3 câu: dùng regex gì để detect sentence? Xử lý edge case nào?*
+> *Tôi tách câu bằng regex dựa trên các dấu kết thúc phổ biến (`.`, `!`, `?`) kết hợp khoảng trắng để giữ ranh giới ngữ nghĩa tự nhiên. Sau khi tách, mỗi câu được `strip()` và loại phần rỗng để tránh tạo chunk nhiễu. Cuối cùng các câu được gom theo `max_sentences_per_chunk`, giúp output ổn định và dễ kiểm soát độ dài.*
 
 **`RecursiveChunker.chunk` / `_split`** — approach:
-> *Viết 2-3 câu: algorithm hoạt động thế nào? Base case là gì?*
+> *Thuật toán recursive ưu tiên tách theo separator lớn trước (`\n\n`, `\n`, `. `), sau đó mới giảm dần đến separator nhỏ hơn khi đoạn vẫn vượt `chunk_size`. Base case là khi đoạn hiện tại đã đủ ngắn hoặc không còn separator để tách thêm. Cách này giữ được cấu trúc tài liệu tốt hơn so với cắt cứng theo số ký tự.*
 
 ### EmbeddingStore
 
 **`add_documents` + `search`** — approach:
-> *Viết 2-3 câu: lưu trữ thế nào? Tính similarity ra sao?*
+> *Trong `add_documents`, tôi chuẩn hóa mỗi tài liệu thành record gồm `id`, `doc_id`, `content`, `metadata`, và `embedding`, sau đó lưu vào store. Ở `search`, hệ thống embed câu hỏi rồi tính điểm tương đồng bằng dot product giữa query vector và từng document vector. Kết quả được sort giảm dần theo `score` và cắt theo `top_k`.*
 
 **`search_with_filter` + `delete_document`** — approach:
-> *Viết 2-3 câu: filter trước hay sau? Delete bằng cách nào?*
+> *Tôi lọc metadata trước trong `search_with_filter` để thu nhỏ tập candidate, rồi mới chạy similarity search trên tập đã lọc nhằm tăng precision. Với `delete_document`, store xóa toàn bộ record có `doc_id` tương ứng. Hàm trả về `True` nếu kích thước collection giảm sau thao tác, ngược lại trả `False`.*
 
 ### KnowledgeBaseAgent
 
 **`answer`** — approach:
-> *Viết 2-3 câu: prompt structure? Cách inject context?*
+> *`answer()` lấy top-k chunk liên quan từ vector store, ghép thành context rồi chèn vào prompt theo cấu trúc rõ ràng: NGỮ CẢNH -> CÂU HỎI -> TRẢ LỜI. Prompt yêu cầu model chỉ dựa trên context và nói thẳng khi thiếu dữ liệu. Cách inject này giúp hạn chế hallucination và tăng khả năng truy vết nguồn.*
 
 ### Test Results
 
@@ -143,7 +149,7 @@ Giải thích cách tiếp cận của bạn khi implement các phần chính tr
 # Paste output of: pytest tests/ -v
 ```
 
-**Số tests pass:** __ / __
+**Số tests pass:** 42 / 42
 
 ---
 
@@ -151,14 +157,14 @@ Giải thích cách tiếp cận của bạn khi implement các phần chính tr
 
 | Pair | Sentence A | Sentence B | Dự đoán | Actual Score | Đúng? |
 |------|-----------|-----------|---------|--------------|-------|
-| 1 | | | high / low | | |
-| 2 | | | high / low | | |
-| 3 | | | high / low | | |
-| 4 | | | high / low | | |
-| 5 | | | high / low | | |
+| 1 | Hướng dẫn thanh toán bằng ví điện tử như thế nào? | Tôi muốn trả tiền đơn hàng qua ví điện tử. | high | 0.0696 | Sai |
+| 2 | Tôi cần kiểm tra trạng thái đơn hàng ở đâu? | Làm sao theo dõi đơn hàng đang giao? | high | -0.0341 | Sai |
+| 3 | Chính sách hoàn tiền mất bao lâu? | Quy trình refund thường bao nhiêu ngày? | high | 0.0501 | Sai |
+| 4 | Hướng dẫn tích hợp API thanh toán cho kỹ sư. | Hôm nay trời có mưa lớn ở Hà Nội không? | low | 0.0851 | Sai |
+| 5 | Thanh toán thất bại vì OTP hết hạn. | Lỗi OTP khi thanh toán bị quá thời gian xác nhận. | high | -0.1189 | Sai |
 
 **Kết quả nào bất ngờ nhất? Điều này nói gì về cách embeddings biểu diễn nghĩa?**
-> *Viết 2-3 câu:*
+> *Cặp gây bất ngờ nhất là cặp 4 vì hai câu khác domain rõ ràng nhưng điểm vẫn dương. Điều này cho thấy với mock embedding deterministic, similarity score không phản ánh ngữ nghĩa mạnh như embedding model chuyên dụng. Vì vậy khi đánh giá retrieval thực tế, nên dùng embedder phù hợp domain và không kết luận chỉ từ mock score.*
 
 ---
 
