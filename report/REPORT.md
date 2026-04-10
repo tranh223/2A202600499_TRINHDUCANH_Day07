@@ -99,7 +99,7 @@ Chạy `ChunkingStrategyComparator().compare()` trên 2-3 tài liệu:
 ```python
 from src.chunking import RecursiveChunker
 
-text = './data/thanhtoan.txt'
+text = './data/thanhtoan.md'
 my_chunker = RecursiveChunker(chunk_size=250)
 chunks = my_chunker.chunk(text)
 ```
