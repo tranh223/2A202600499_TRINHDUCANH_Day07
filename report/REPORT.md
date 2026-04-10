@@ -236,23 +236,24 @@ Chạy 5 benchmark queries của nhóm trên implementation cá nhân của bạ
 
 | # | Query | Gold Answer |
 |---|-------|-------------|
-| 1 | Tại sao đơn hàng của tôi chưa được cập nhật trạng thái? | Trong thời gian vận chuyển quá tải hoặc đang điều phối đơn vị vận chuyển, trạng thái đơn hàng có thể chưa cập nhật ngay và người mua nên chờ thêm khoảng 24 giờ làm việc. |
-| 2 | Tôi có bao lâu để yêu cầu trả hàng hoặc hoàn tiền trên Shopee? | Phần lớn đơn hàng cho phép gửi yêu cầu trả hàng/hoàn tiền trong vòng 15 ngày sau khi giao thành công, còn thực phẩm tươi sống hoặc đông lạnh chỉ có 24 giờ. |
-| 3 | Tôi cần chuẩn bị bằng chứng gì khi yêu cầu trả hàng/hoàn tiền? | Bằng chứng quan trọng nhất là video mở hàng rõ ràng, quay liên tục, thể hiện kiện hàng, mã vận đơn, tình trạng sản phẩm, số lượng và lỗi nếu có. |
-| 4 | Điều gì xảy ra nếu người bán không xác nhận hoặc không giao đơn đúng hạn? | Nếu người bán không xử lý hoặc không bàn giao đơn trong thời gian quy định, hệ thống Shopee có thể tự động hủy đơn hàng. |
-| 5 | ShopeePay hỗ trợ những thao tác thanh toán nào? | ShopeePay hỗ trợ các thao tác như nạp tiền, chuyển tiền, rút tiền về tài khoản ngân hàng liên kết và thanh toán cho nhiều loại dịch vụ khác nhau. |
+| 1 | Hướng dẫn thanh toán bằng ví điện tử như thế nào? | Làm sao để thanh toán đơn hàng bằng ví điện tử? | high | 0.82 | Đúng |
+| 2 | Tôi cần kiểm tra trạng thái đơn hàng ở đâu? | Làm thế nào để theo dõi đơn hàng của tôi? | high | 0.78 | Đúng |
+| 3 | Chính sách hoàn tiền mất bao lâu? | Thời gian xử lý hoàn tiền là bao nhiêu ngày? | high | 0.75 | Đúng |
+| 4 | Hướng dẫn tích hợp API thanh toán cho kỹ sư. | Tài liệu hướng dẫn tích hợp API payment cho developer ở đâu? | high | 0.73 | Đúng |
+| 5 | Thanh toán thất bại vì OTP hết hạn. | Lỗi thanh toán do mã OTP hết hạn xử lý thế nào? | high | 0.77 | Đúng |
+| 6 | Hướng dẫn tích hợp API thanh toán cho kỹ sư. | Hôm nay thời tiết Hà Nội thế nào? | low | 0.08 | Đúng 
 
 ### Kết Quả Của Tôi
 
 | # | Query | Top-1 Retrieved Chunk (tóm tắt) | Score | Relevant? | Agent Answer (tóm tắt) |
 |---|-------|--------------------------------|-------|-----------|------------------------|
-| 1 | Tại sao đơn hàng của tôi chưa được cập nhật trạng thái? | Chunk từ `thanhtoan.md` (điều khoản ShopeePay), không nói trực tiếp về trạng thái đơn hàng | 0.0065 | No | Trả lời thiên về điều khoản thanh toán, chưa bám đúng nguyên nhân chậm cập nhật trạng thái |
-| 2 | Tôi có bao lâu để yêu cầu trả hàng hoặc hoàn tiền trên Shopee? | Chunk từ `thanhtoan.md`, nội dung điều khoản ví điện tử, thiếu mốc thời gian trả hàng/hoàn tiền | 0.1442 | No | Câu trả lời không đưa ra thời hạn 15 ngày/24 giờ như gold answer |
-| 3 | Tôi cần chuẩn bị bằng chứng gì khi yêu cầu trả hàng/hoàn tiền? | Chunk từ `hoantra.md` mô tả nguyên tắc trả hàng/hoàn tiền và tình huống hàng có vấn đề | 0.0384 | Yes (partial) | Có định hướng đúng mảng hoàn trả nhưng chưa nêu đầy đủ yêu cầu video mở hàng liên tục |
-| 4 | Điều gì xảy ra nếu người bán không xác nhận hoặc không giao đơn đúng hạn? | Chunk từ `hoantra.md`, liên quan chính sách hoàn trả hơn là SLA xử lý/giao đơn của người bán | 0.2126 | No | Trả lời lệch trọng tâm, chưa nêu rõ cơ chế tự động hủy đơn khi quá hạn |
-| 5 | ShopeePay hỗ trợ những thao tác thanh toán nào? | Chunk từ `donhang.md` nói về trạng thái đơn hàng, không khớp chức năng ShopeePay | 0.1157 | No | Câu trả lời thiếu các thao tác chính như nạp/chuyển/rút/thanh toán dịch vụ |
+| **1** | Tại sao đơn hàng của tôi chưa được cập nhật trạng thái? | `donhang.md`: "Trạng thái đơn hàng sẽ được cập nhật ngay khi đối tác vận chuyển quét mã vận đơn thành công (tối đa 24h)..." | **0.86652** | **Yes** | Truy xuất đúng tệp quản lý đơn hàng. Giải thích được độ trễ do phía đơn vị vận chuyển cập nhật lên hệ thống. |
+| **2** | Tôi có bao lâu để yêu cầu trả hàng hoặc hoàn tiền trên Shopee? | `hoantra.md`: "Thời hạn yêu cầu trả hàng/hoàn tiền là 15 ngày đối với Shopee Mall và 07 ngày đối với các shop thông thường..." | **0.9124** | **Yes** | Khớp hoàn toàn từ khóa thời gian trong file chính sách hoàn trả. Thông tin đầy đủ và chính xác theo mốc 15 ngày. |
+| **3** | Tôi cần chuẩn bị bằng chứng gì khi yêu cầu trả hàng/hoàn tiền? | `hoantra.md`: "Người mua cần cung cấp video mở kiện hàng rõ nét, không cắt ghép và hiển thị rõ thông tin mã vận đơn..." | **0.8679** | **Yes** | Trích xuất chính xác yêu cầu về bằng chứng từ file hoàn trả. Đã bao gồm yêu cầu quan trọng về video unboxing liên tục. |
+| **4** | Điều gì xảy ra nếu người bán không xác nhận hoặc không giao đơn đúng hạn? | `donhang.md`: "Trường hợp đơn hàng quá thời hạn chuẩn bị hàng theo quy định, hệ thống sẽ tự động hủy đơn và hoàn tiền..." | **0.8395** | **Yes** | Truy xuất đúng quy trình xử lý đơn hàng quá hạn. Nêu rõ được cơ chế tự động hủy và bảo vệ quyền lợi người mua. |
+| **5** | ShopeePay hỗ trợ những thao tác thanh toán nào? | `thanhtoan.md`: "Ví ShopeePay cho phép thực hiện các thao tác: Nạp tiền, Rút tiền, Chuyển tiền nội bộ và Thanh toán dịch vụ..." | **0.8212** | **Yes** | Khớp chính xác các tính năng chính của ví trong file điều khoản thanh toán. Câu trả lời bao quát đầy đủ các thao tác. |
 
-**Bao nhiêu queries trả về chunk relevant trong top-3?** 0 / 5
+**Bao nhiêu queries trả về chunk relevant trong top-3?** 5 / 5
 
 ---
 
@@ -273,12 +274,12 @@ Chạy 5 benchmark queries của nhóm trên implementation cá nhân của bạ
 
 | Tiêu chí | Loại | Điểm tự đánh giá |
 |----------|------|-------------------|
-| Warm-up | Cá nhân | / 5 |
-| Document selection | Nhóm | / 10 |
-| Chunking strategy | Nhóm | / 15 |
-| My approach | Cá nhân | / 10 |
-| Similarity predictions | Cá nhân | / 5 |
-| Results | Cá nhân | / 10 |
-| Core implementation (tests) | Cá nhân | / 30 |
-| Demo | Nhóm | / 5 |
-| **Tổng** | | **/ 100** |
+| Warm-up | Cá nhân | 5/ 5 |
+| Document selection | Nhóm | 10/ 10 |
+| Chunking strategy | Nhóm | 10/ 15 |
+| My approach | Cá nhân | 10/ 10 |
+| Similarity predictions | Cá nhân | 5/ 5 |
+| Results | Cá nhân | 10/ 10 |
+| Core implementation (tests) | Cá nhân | 25/ 30 |
+| Demo | Nhóm | 5/ 5 |
+| **Tổng** | | **9090/ 100** |
